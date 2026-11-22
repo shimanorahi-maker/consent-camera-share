@@ -1,0 +1,121 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent Camera Share</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #101827;
+      color: white;
+      text-align: center;
+      padding: 30px 15px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #1e293b;
+      padding: 25px;
+      border-radius: 16px;
+    }
+
+    button {
+      padding: 12px 20px;
+      margin: 8px;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    video {
+      width: 100%;
+      background: black;
+      border-radius: 12px;
+      margin-top: 15px;
+    }
+
+    #status {
+      color: #93c5fd;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Camera Sharing</h1>
+    <p>This page lets you share your camera only with your consent.</p>
+
+    <button id="start">Start Camera Sharing</button>
+    <button id="switch" disabled>Switch Camera</button>
+    <button id="stop" disabled>Stop Sharing</button>
+
+    <video id="preview" autoplay playsinline muted></video>
+
+    <p id="status">Camera is off.</p>
+  </div>
+
+  <script>
+    const video = document.getElementById("preview");
+    const status = document.getElementById("status");
+    const start = document.getElementById("start");
+    const stop = document.getElementById("stop");
+    const change = document.getElementById("switch");
+
+    let stream = null;
+    let facingMode = "user";
+
+    start.addEventListener("click", async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode },
+          audio: false
+        });
+
+        video.srcObject = stream;
+        status.textContent = "Camera sharing is active on this device.";
+
+        start.disabled = true;
+        stop.disabled = false;
+        change.disabled = false;
+      } catch (error) {
+        status.textContent = "Camera permission denied or unavailable.";
+      }
+    });
+
+    change.addEventListener("click", async () => {
+      facingMode = facingMode === "user" ? "environment" : "user";
+
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode },
+          audio: false
+        });
+
+        video.srcObject = stream;
+      } catch (error) {
+        status.textContent = "Unable to switch camera.";
+      }
+    });
+
+    stop.addEventListener("click", () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+
+      video.srcObject = null;
+      status.textContent = "Camera sharing stopped.";
+      start.disabled = false;
+      stop.disabled = true;
+      change.disabled = true;
+    });
+  </script>
+</body>
+</html>
